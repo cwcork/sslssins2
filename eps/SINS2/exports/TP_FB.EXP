@@ -1,0 +1,29 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK TP_FB
+VAR_INPUT
+	on_intlk : BOOL;
+	on_ena : BOOL;
+	off_ena : BOOL;
+
+	on_req : BOOL;
+	off_req : BOOL;
+END_VAR
+VAR_OUTPUT
+	on_cmd : BOOL;
+	not_symbol : BOOL;
+END_VAR
+VAR
+END_VAR
+(* @END_DECLARATION := '0' *)
+on_cmd 		:=	on_intlk AND
+				(NOT (off_ena AND off_req)) AND
+				((on_ena AND on_req) OR on_cmd);
+
+not_symbol	:=	(on_cmd AND NOT off_ena) OR
+				(NOT on_cmd AND NOT (on_intlk AND on_ena));
+
+END_FUNCTION_BLOCK

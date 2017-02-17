@@ -1,0 +1,29 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK VALVE_FB
+VAR_INPUT
+	open_intlk    : BOOL; (* open command interlock *)
+	open_ena      : BOOL; (* open command enable *)
+	close_ena     : BOOL; (* close command enable *)
+
+	open_req      : BOOL; (* open command request *)
+	close_req     : BOOL; (* close command request *)
+END_VAR
+VAR_OUTPUT
+	open_cmd      : BOOL; (* open command *)
+	not_symbol    : BOOL; (* state change prohibited *)
+END_VAR
+VAR
+END_VAR
+(* @END_DECLARATION := '0' *)
+open_cmd	:=	open_intlk AND
+				(NOT (close_ena AND close_req)) AND
+				((open_ena AND open_req) OR open_cmd);
+
+not_symbol	:=	(open_cmd AND NOT close_ena) OR
+				(NOT open_cmd AND NOT (open_intlk AND open_ena));
+
+END_FUNCTION_BLOCK

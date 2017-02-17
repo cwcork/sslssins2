@@ -1,0 +1,317 @@
+NOTE : N20140617-02
+SUBJ : SHARP - Pump/Vent Notes
+AUTH : Carl Cork
+
+REV DATE        DESCRIPTION
+--- ----------  ------------------------------------------------------------
+ 00 2014-06-17  Initial
+ 01 2014-06-28  Add device interlock notes
+
+States
+
+1. DEVICES
+
+  1.1 PE     - Pressure elements
+    APR-250 for HI pressure
+    PKR-251 for MID and LO pressure
+    Three thresholds:
+      HI  - atmospheric pressure (760 Torr)
+      MID - ~1 Torr
+      LO  - ~1E-6 Torr
+  
+    Signals:
+      PIT01_OK
+      PIT01_PSL_HI
+      PIT01_PSL_MID
+      PIT01_PSL_LO
+    
+      PIT02_OK
+      PIT02_PSL_HI
+      PIT02_PSL_MID
+      PIT02_PSL_LO
+    
+  1.2 BP     - Turbo backing pump
+    ACP-28 roots type pump.
+    
+    Logic:
+      on_intlk := TRUE;
+      on_ena   := TRUE;
+      off_ena  := when turbo pumps are both off
+    
+    Signals:
+      RP01_ON
+      RP01_ON_CMD
+    
+  1.3 BPV    - Turbo backing valve
+    VAT HV angle valve.
+    BPV_OPEN_CMD = (BP==ON and TP==ON).
+    
+    Logic:
+      open_intlk := BP_ON;
+      open_ena   := open_intlk;
+      close_ena  := NOT TP_ON_CMD;
+    
+    Signals:
+      BPV01_OPEN
+      BPV01_CLOSED
+      BPV01_OPEN_CMD
+
+      BPV02_OPEN
+      BPV02_CLOSED
+      BPV02_OPEN_CMD
+  
+  1.4 TP     - Turbo pump
+    Pfeiffer HiPace80 and HiPace800M.
+    PUMPING_STATION_ON = ON_INTERLOCK and ((AUTO_MODE and PUMP_REQ) or (MANUAL_MODE and TP_ON_REQ))
+    where,
+    ON_INTERLOCK = (BP==ON and BPV==OPEN)
+    
+    Logic:
+      on_intlk := BP_ON AND BPV_OPEN;
+      on_ena   := TRUE;
+      off_ena  := TPV_CLOSED;
+    
+    Signals:
+      TP01_OK
+      TP01_AT_SPEED
+      TP01_ON_CMD
+      
+      TP02_OK
+      TP02_AT_SPEED
+      TP02_ON_CMD
+  
+  1.5 TPV    - Turbo pump isolation valve
+    VAT Gate valve.
+    TPV_OPEN_CMD = TPV_OPEN_INTLK and (see pump/vent discussion below)
+    TPV_OPEN_INTLK = TP_READY and PE_PSL_MID  (pressure < MID)
+    
+    Logic:
+      open_intlk  := TP_READY and PE_PSL_MID;
+      open_ena    := TRUE;
+      close_ena   := TRUE;
+    
+    Signals:
+      TPV01_OPEN
+      TPV01_CLOSED
+      TPV01_OPEN_CMD
+  
+      TPV02_OPEN
+      TPV02_CLOSED
+      TPV02_OPEN_CMD
+  
+  1.6 RP     - Rough pump
+    Varian Scroll pump
+    RP_ON_CMD = (AUTO_MODE and PUMP_REQ and not PUMPED) or (MANUAL_MODE and RP_ON_REQ)
+    RP_OFF_ENABLE = RPV_CLOSED
+    
+    Logic:
+      on_intlk  := TRUE;
+      on_ena    := TRUE;
+      off_ena   := RPV_CLOSED;
+    
+    Signals:
+      RP02_ON
+      RP02_ON_CMD
+    
+  1.7 RPV    - Rough pump isolation valve (SLOW and FAST)
+    VAT HV softstart and normal angle valves.
+    RPV_OPEN_INTLK = RP_ON and ESV_CLOSED and MASKV_CLOSED
+    RPV_OPEN = (AUTO_MODE and see pump/vent discussion below) or (MANUAL_MODE and RPV_OPEN_REQ)
+    
+    Logic:
+      open_intlk := RP_ON AND ES_CSD AND MASKV_CLOSED;
+      open_ena   := NOT PE_PSL_LO;
+      close_ena  := TRUE;
+    
+    Signals:
+      RPV01_OPEN
+      RPV01_CLOSED
+      RPV01_SLOW_CMD
+      RPV01_FAST_CMD
+      
+      RPV02_OPEN
+      RPV02_CLOSED
+      RPV02_OPEN_CMD
+  
+  1.8 VPV   - Vent valve (SLOW and FAST)
+    Swagelok dual leg assembly.
+    VPV_OPEN_INTLK = ESV_CLOSED and MASKV_CLOSED and TPV_CLOSED and RPV_CLOSED
+    
+    Logic:
+      open_intlk := ES_CLOSED AND MASKV_CLOSED AND TPV_CLOSED AND RPV_CLOSED;
+      open_ena   := TRUE;
+      close_ena  := TRUE;
+    
+    Signals:
+      VPV01_SLOW_CMD
+      VPV01_FAST_CMD
+
+      VPV02_SLOW_CMD
+      VPV02_FAST_CMD
+      
+  1.9 ESV    - End station isolation valve
+    Closed at start of either pump or vent cycle.
+    Also closed during mask loading when MASKV==OPEN.
+    
+    Logic:
+      open_intlk := PE01_PSL_LO AND TPV01_OPEN AND MASKV_CLOSED AND RPV01_CLOSED AND (NOT VPV01_FAST_CMD) AND (NOT VPV01_SLOW_CMD)
+      open_ena   := TRUE;
+      close_ena  := TRUE;
+    
+    Signals:
+      ES_OPEN
+      ES_CLOSED
+      ES_OPEN_PERMIT
+    
+  1.10 MASKV - Isolation valve between load lock and chamber
+    Closed at start of either pump or vent cycle.
+    Also interlocked to the LOADER_BUSY signal.
+    
+    Logic:
+    
+    Signals:
+      MASKV01_OPEN
+      MASKV01_CLOSED
+      MASKV01_OPEN_CMD
+      MASKV01_CLOSE_CMD
+      
+      LOADER01_LID_CLOSED
+      LOADER01_BUSY
+      LOADER01_RETRACTED
+      LOADER01_ENABLE_CMD
+
+
+2. ISOLATED
+
+    BP        : NC
+    BPV       : OPEN IF BP ON
+    TP        : NC
+    TPV       : CLOSED
+    RP        : OFF
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+
+
+3. PUMPING
+
+  3.1 RP_STARTING
+
+    PE        : MID < PE
+    TPV       : CLOSED
+    RP        : STARTING (ON_CMD)
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+  3.2 SLOW_ROUGHING
+
+    PE        : MID < PE
+    TP        : NC
+    TPV       : CLOSED
+    RP        : ON
+    RPV_SLOW  : OPEN
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+  3.3 FAST_ROUGHING
+  
+    Starts after fixed time delay from SLOW_ROUGHING.
+
+    PE        : MID < PE
+    TP        : NC
+    TPV       : CLOSED
+    RP        : ON
+    RPV_SLOW  : OPEN
+    RPV_FAST  : OPEN
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+  3.4 TURBO_PUMPING
+  
+    It is assumed that the turbo pump has been started up in parallel.
+
+    PE        : LOW < PE < MID
+    TP        : READY
+    TPV       : OPEN
+    RP        : ON (in case system falls back to FAST_ROUGHING)
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+  3.5 PUMPED
+
+    PE        : PE < LOW
+    TP        : READY
+    TPV       : OPEN
+    RP        : OFF
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+
+4. VENTING
+
+  4.1 SLOW_VENTING
+
+    PE        : PE < MID
+    TPV       : CLOSED
+    RP        : OFF
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : OPEN
+    VENT_FAST : CLOSED
+  
+  4.2 FAST_VENTING
+
+    PE        : MID < PE < HIGH
+    TPV       : CLOSED
+    RP        : OFF
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : OPEN
+    VENT_FAST : OPEN
+  
+  4.3 VENTED
+
+    PE        : HIGH < PE
+    TPV       : CLOSED
+    RP        : OFF
+    RPV_SLOW  : CLOSED
+    RPV_FAST  : CLOSED
+    VENT_SLOW : CLOSED
+    VENT_FAST : CLOSED
+  
+
+5. TURBO CONTROL
+
+  5.1 BP_STARTING
+  
+    BP        : STARTING
+    BPV       : CLOSED
+    TP        : OFF
+  
+  5.2 BV_OPENING
+  
+    BP        : ON
+    BPV       : OPENING
+    TP        : OFF
+  
+  5.3 TP_STARTING
+  
+    BP        : ON
+    BPV       : OPEN
+    TP        : STARTING
+  
+  5.4 TP_READY
+  
+    BP        : ON
+    BPV       : OPEN
+    TP        : AT_SPEED
+
+

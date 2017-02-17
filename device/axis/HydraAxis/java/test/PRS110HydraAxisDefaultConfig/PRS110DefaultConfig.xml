@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE preferences SYSTEM "http://java.sun.com/dtd/preferences.dtd">
+<preferences EXTERNAL_XML_VERSION="1.0">
+  <root type="user">
+    <map/>
+    <node name="cxro">
+      <map/>
+      <node name="test">
+        <map/>
+        <node name="device">
+          <map/>
+          <node name="axis">
+            <map/>
+            <node name="HydraAxis">
+              <map/>
+              <node name="PRS110">
+                <map/>
+                <node name="1">
+                  <map>
+                    <entry key="axisUnits" value="deg"/>
+                    <entry key="scale" value="1.0"/>
+                    <entry key="offsetRaw" value="0.0"/>
+                    <entry key="initializeSpeedRaw" value="5.0"/>
+                    <entry key="defaultSpeedRaw" value="40.0"/>
+                    <entry key="defaultAccelerationRaw" value="400.0"/>
+                    <entry key="lowerLimitHardRaw" value="-360.1"/>
+                    <entry key="lowerLimitSoftRaw" value="-360.0"/>
+                    <entry key="upperLimitHardRaw" value="360.1"/>
+                    <entry key="upperLimitSoftRaw" value="360.0"/>
+                    <entry key="hasLimits" value="true"/>
+                    <entry key="hasHome" value="false"/>
+                    <entry key="hasIndex" value="true"/>
+                    <entry key="hasAuxEncoder" value="false"/>
+                    <entry key="auxEncoderScale" value="1.0"/>
+                    <entry key="auxEncoderOffsetRaw" value="0.0"/>
+                    <entry key="axisNumber" value="1"/>
+                  </map>
+                </node>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
+    </node>
+  </root>
+</preferences>

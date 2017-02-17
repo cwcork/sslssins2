@@ -1,0 +1,183 @@
+SUBJ : WAGO - NOVRAM area address layout
+AUTH : Carl Cork
+
+REV DATE        DESCRIPTION
+--- ----------  ------------------------------------------------------------
+ 00 2016-11-29  Initial, based on N20130806-01-02
+
+From the Modbus and WAGO perspective, the WAGO NOVRAM area read-only and read-write 
+address spaces overlap. Similarly, the Discrete and Register spaces overlap.
+Special care must be taken to avoid interference when using Modbus addresses.
+
+
+0. Overview
+
+  MODBUS      WAGO          WAGO      MODBUS
+  DISCRETE    DISCRETE      WORD      REGISTER
+  ADDRESS     ADDRESS       ADDRESS   ADDRESS
+  --------  -----------   ----------  --------
+    0x3000      %MX0.0          %MW0    0x3000  START of RETAIN address space
+     12288                               12288
+  -------------------------------------------------------------------------
+    0x3000      %MX0.0                          START of SC_DISCRETES
+     12288 
+
+    0x7FFF   %MX1279.15
+     32767                                      END   of SC_DISCRETES
+  --------------------------------------------------------------------------
+                             %MW1280    0x3500  START of SC_REGISTERS
+                                         13568
+
+                             %MW6143    0x47FF  WAGO 750-871 LIMIT
+                                         18431
+
+                             %MW8191    0x4FFF  WAGO 750-881 LIMIT
+                                         20479
+
+  --------------------------------------------------------------------------
+                            %MW12287    0x5FFF  END   of RETAIN address space
+                                         24575
+ 
+  We have several 750-871 and 750-881 PLCs in the field. Therefore, we will
+  assume for now that the RETAIN address space ends at the 750-871 limit.
+  We may relax this restriction in the future. Special applications are
+  free to use all physically available space.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. DISCRETES (bits)
+
+  We reserve the first 2.5kB of the retain address space for DISCRETE IO.
+  This corresponds to Modbus discrete addresses 0x3000..0x7FFF (20480 discretes).
+  As mentioned above, the RO and RW retain address spaces are overlapped.
+  Wago specifies that you do reads via RO address space (FC1 and FC2) and
+  writes via RW address space (FC5 and FC15).
+  
+  The supervisory control region is further divided up into PLC_OUT and PLC_IN
+  regions. PLC_OUT regions are read-write by the PLC and read-only by Modbus.
+  PLC_IN regions are read-only by the PLC and read-write by Modbus. Note, these 
+  are only administrative rules; the entire RETAIN area is physically read-write
+  by both the PLC and Modbus.
+  
+  MODBUS      WAGO      
+  DISCRETE    DISCRETE  
+  ADDRESS     ADDRESS    DESCRIPTION
+  --------  -----------  -------------------------------------------------
+    0x3000      %MX0.0   START of PLC_OUT DISCRETES
+     12288 
+
+    0x57FF    %MX639.15
+     22527               END   of PLC_OUT DISCRETES
+  --------------------------------------------------------------------------
+    0x5800    %MX640.0   START of PLC_IN DISCRETES
+     22528
+
+    0x7FFF   %MX1279.15
+     32767               END   of PLC_IN DISCRETES
+  --------------------------------------------------------------------------
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2. REGISTERS (16-bit words)
+
+  We reserve the remaining retain address space for REGISTER IO.
+  This corresponds to Modbus register addresses 0x3500..0x5FFF (11008 registers).
+  The usable address space is somewhat less than this, depending on the particular
+  PLC. For instance,
+  
+     WAGO 750-871 usable RETAIN address range: 0x3500..0x47FF (4864 registers)
+     WAGO 750-881 usable RETAIN address range: 0x3500..0x4FFF (6912 registers)
+     
+  For this specification, we will assume that the usable retain address space
+  ends at 0x47FF (per 750-871 PLC).
+  
+  As mentioned above, the RO and RW retain address spaces are overlapped.
+  Wago specifies that you do reads via RO address space (FC3 and FC4) and
+  writes via RW address space (FC6 and FC16).
+  
+  The supervisory control region is further divided up into PLC_OUT and PLC_IN
+  regions. PLC_OUT regions are read-write by the PLC and read-only by Modbus.
+  PLC_IN regions are read-only by the PLC and read-write by Modbus. Note, these 
+  are only administrative rules; the entire RETAIN area is physically read-write
+  by both the PLC and Modbus.
+  
+  MODBUS      WAGO
+  REGISTER    WORD
+  ADDRESS     ADDRESS     DESCRIPTION
+  --------  -----------   -------------------------------------------------
+    0x3500      %MW1280   START of PLC_OUT REGISTERS
+     13568
+
+    0x3E7F      %MW3711
+     15999                END   of PLC_OUT REGISTERS
+  --------------------------------------------------------------------------
+    0x3E80      %MW3712   START of PLC_IN REGISTERS
+     16000
+
+    0x47FF      %MW6143   
+     18431                END   of PLC_IN REGISTERS
+  --------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+  

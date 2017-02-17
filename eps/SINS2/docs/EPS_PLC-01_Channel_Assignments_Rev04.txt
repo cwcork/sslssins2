@@ -1,0 +1,213 @@
+NUS - EPS-PLC-01 Channel Assignments
+Jeff Gamsby
+
+REV DATE        DESCRIPTION
+——  ——————————  ————————————
+00  2016-10-27  Initial draft
+01  2016-11-29  Update to match chnges in PLC IO List
+02  2016-11-30  Add spare analog module
+03  2016-11-30  PE interfaces renamed to PIT
+04  2016-12-05  Simplify signal names and replace tabs with spaces.
+                Revert PIT to PE naming.
+
+
+1. ANALOG INPUTS
+
+    1.1  MODULE 01 - 750-459 - 4AI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE101_PIY                SINS.1 Branchline pressure
+        02                               Common (ground)
+        05  02  PE201_PIY                M201 High range pressure
+        06                               Common (ground)
+        03  03  PE202_PIY                M202 High range pressure
+        04                               Common (ground)
+        07  04  AI_SPARE04
+        08                               Common (ground)
+
+
+    1.2 MODULE 02 - 750-459 - 4AI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE203_HI_PIY             FTR201 High range pressure
+        02                               Common (ground)
+        05  02  PE203_LO_PIY             FTR201 Low range pressure
+        06                               Common (ground)
+        03  03  PE211_HI_PIY             ES211 High range pressure
+        04                               Common (ground)
+        07  04  PE211_LO_PIY             ES211 Low range pressure
+        08                               Common (ground)
+
+    1.3 MODULE 03 - 750-459 - 4AI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE212_HI_PIY             LL211 High range pressure
+        02                               Common (ground)
+        05  02  PE212_LO_PIY             LL211 Low High pressure
+        06                               Common (ground)
+        03  03  AI_SPARE11
+        04                               Common (ground)
+        07  04  AI_SPARE12
+        08                               Common (ground)
+
+    1.3 MODULE 04 - 750-459 - 4AI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  AI_SPARE13
+        02                               Common (ground)
+        05  02  AI_SPARE14
+        06                               Common (ground)
+        03  03  AI_SPARE15
+        04                               Common (ground)
+        07  04  AI_SPARE16
+        08                               Common (ground)
+
+
+2. DIGITAL OUTPUTS
+
+    2.1  MODULE 01 - 750-530 - 8DO
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01 RP2110_ON_CMD
+        05  02 RP2111_ON_CMD
+        02  03 V101_OPEN_CMD
+        06  04 V201_OPEN_CMD
+        03  05 V203_OPEN_CMD
+        07  06 V204_OPEN_CMD
+        04  07 TP201_ON_CMD
+        08  08 VENT201_OPEN_CMD
+
+    2.2  MODULE 02 - 750-530 - 8DO
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  TP211_ON_CMD
+        05  02  TPV211_OPEN_CMD
+        02  03  RPV211_OPEN_CMD
+        06  04  VENT211_SLOW_CMD
+        03  05  VENT211_FAST_CMD
+        07  06  DO_SPARE_14
+        04  07  SLOTV211_OPEN_CMD
+        08  08  SLOTV211_CLOSE_CMD
+
+    2.3  MODULE 03 - 750-530 - 8DO
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  TP212_ON_CMD
+        05  02  TPV212_OPEN_CMD
+        02  03  RPV212_OPEN_CMD
+        06  04  VENT212_SLOW_CMD
+        03  05  VENT212_FAST_CMD
+        07  06  DO_SPARE_22
+        04  07  DO_SPARE_23
+        08  08  DO_SPARE_24
+
+    2.4 MODULE 04 - 750-530 - 8DO
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  DO_SPARE_25
+        05  02  DO_SPARE_26
+        02  03  DO_SPARE_27
+        06  04  DO_SPARE_28
+        03  05  DO_SPARE_29
+        07  06  DO_SPARE_30
+        04  07  DO_SPARE_31
+        08  08  DO_SPARE_32
+
+3. DIGITAL INPUTS
+
+    3.1 MODULE 01 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE101_PSL_LO   
+        05  02  PE201_PSL_LO   
+        02  03  PE202_PSL_LO   
+        06  04  DI_SPARE_04   
+        03  05  RP2110_ON   
+        07  06  RP2111_ON   
+        04  07  PE2110_PSL   
+        08  08  PE2111_PSL   
+
+    3.2 MODULE 02 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE203_PIY_OK   
+        05  02  PE211_PIY_OK   
+        02  03  PE212_PIY_OK   
+        06  04  DI_SPARE_12
+        03  05  PE203_PSL_HI   
+        07  06  PE203_PSL_MIDHI   
+        04  07  PE203_PSL_MIDLO   
+        08  08  PE203_PSL_LO   
+
+    3.3 MODULE 03 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  PE211_PSL_HI   
+        05  02  PE211_PSL_MIDHI   
+        02  03  PE211_PSL_MIDLO   
+        06  04  PE211_PSL_LO   
+        03  05  PE212_PSL_HI   
+        07  06  PE212_PSL_MIDHI   
+        04  07  PE212_PSL_MIDLO   
+        08  08  PE212_PSL_LO   
+
+    3.4 MODULE 04 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  V100_OPEN   
+        05  02  V100_CLOSED   
+        02  03  V101_OPEN   
+        06  04  V101_CLOSED   
+        03  05  V201_OPEN   
+        07  06  V201_CLOSED   
+        04  07  V202_OPEN   
+        08  08  V202_CLOSED   
+
+    3.5 MODULE 05 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  V203_OPEN   
+        05  02  V203_CLOSED   
+        02  03  V204_OPEN   
+        06  04  V204_CLOSED   
+        03  05  TP201_TURBO_OK   
+        07  06  TP201_AT_SPEED   
+        04  07  RPV211_OPEN   
+        08  08  RPV211_CLOSED   
+
+    3.6 MODULE 06 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  TPV211_OPEN   
+        05  02  TPV211_CLOSED   
+        02  03  RPV212_OPEN   
+        06  04  RPV212_CLOSED   
+        03  05  TPV212_OPEN   
+        07  06  TPV212_CLOSED   
+        04  07  TP211_AT_SPEED   
+        08  08  TP211_TURBO_OK   
+
+    3.7 MODULE 07 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  TP212_AT_SPEED   
+        05  02  TP212_TURBO_OK   
+        02  03  SLOTV212_OPEN   
+        06  04  SLOTV212_CLOSED   
+        03  05  LL211_LID_CLOSED   
+        07  06  LL211_ARM_RETRACTED   
+        04  07  DI_SPARE_55
+        08  08  DI_SPARE_56
+
+    3.8 MODULE 08 - 750-430 - 8DI
+        PIN CH  NAME                     DESCRIPTION
+        ——— ——  ———————————————————————— ———————————————————————————————————————
+        01  01  DI_SPARE_57
+        05  02  DI_SPARE_58
+        02  03  DI_SPARE_59
+        06  04  DI_SPARE_60
+        03  05  DI_SPARE_61
+        07  06  DI_SPARE_62
+        04  07  DI_SPARE_63
+        08  08  DI_SPARE_64
+

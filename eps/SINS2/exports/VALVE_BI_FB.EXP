@@ -1,0 +1,36 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK VALVE_BI_FB
+VAR_INPUT
+	open_intlk    : BOOL; (* open command interlock *)
+	open_ena      : BOOL; (* open command enable *)
+	close_intlk   : BOOL; (* close command interlock *)
+	close_ena     : BOOL; (* close command enable *)
+
+	open_req      : BOOL; (* open command request *)
+	close_req     : BOOL; (* close command request *)
+END_VAR
+VAR_OUTPUT
+	open_cmd      : BOOL; (* open command *)
+	close_cmd     : BOOL; (* close command *)
+	not_symbol    : BOOL; (* state change prohibited *)
+END_VAR
+VAR
+END_VAR
+(* @END_DECLARATION := '0' *)
+
+open_cmd	:=	open_intlk AND
+				(NOT (close_ena AND close_req)) AND
+				((open_ena AND open_req) OR open_cmd);
+
+close_cmd	:= 	close_intlk AND
+				(NOT (open_ena AND open_req)) AND
+				((close_ena AND close_req) OR close_cmd);
+
+not_symbol	:=	(open_cmd  AND NOT (close_intlk AND close_ena)) OR
+				(close_cmd AND NOT (open_intlk AND open_ena));
+
+END_FUNCTION_BLOCK

@@ -1,0 +1,342 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+PROGRAM Actuator_SM
+
+VAR CONSTANT
+	strAddress		: STRING := '192.168.1.11';
+	wPort			: WORD := 502;
+	bID				: BYTE := 1;
+	tTCP_Timeout	: TIME := t#100ms;
+	tTCP_Watchdog	: TIME := t#10s;
+END_VAR
+VAR
+	oActuator		: Actuator;	(* Actuator control and status object *)
+
+	uiSuccessful 	: UINT; 	(* total numbers of successful Transfers *)
+	uiFailing		: UINT;	 	(* total numbers of failing Transfers 	*)
+END_VAR
+(* @END_DECLARATION := '0' *)
+(* Actuator State Machine *)
+CASE oActuator.wState OF
+	10: (* RESET: reset connection *)
+		xActuatorReady := FALSE;
+		oActuator.xConnect := FALSE;
+		CONNECT();
+		oActuator.wState := 15;
+
+	15: (* INIT: Initialize connection *)
+		oActuator.xConnect := TRUE;
+		CONNECT();
+		oActuator.wState := 20;
+
+	20: (* CONNECTING: wait for TCP connection*)
+		CONNECT();
+		IF  oActuator.oMBMaster.xIS_CONNECTED THEN
+			oActuator.xBusy := FALSE;
+			oActuator.wState := 30;
+		END_IF
+
+	30: (* INITIALIZING: wait for servo on *)
+		STATUS_READ();
+		IF oActuator.xDataReady THEN
+			(* test for EMGS ON or PWR OFF *)
+			IF (oActuator.awStatus[5].15 OR NOT oActuator.awStatus[5].13 ) THEN
+				(*  Wait for this condition to be satisfied *)
+				oActuator.wState := 30;
+			(* test for ALMH alarm *)
+			ELSIF oActuator.awStatus[5].10 THEN
+				(* try to reset alarm *)
+				oActuator.wState := 31;
+			(* test for SV servo OFF or PEND OFF *)
+			ELSIF (NOT oActuator.awStatus[5].12) OR (NOT oActuator.awStatus[5].3) THEN
+				(* try to turn on servo *)
+				oActuator.wState := 33;
+			(* test for HEND homing complete *)
+			ELSIF NOT oActuator.awStatus[5].4 THEN
+				(* try to HOME motor *)
+				oActuator.wState := 35;
+			ELSE
+				(* ready to receive position commands *)
+				oActuator.wState := 40;
+			END_IF
+		END_IF
+
+	31: (* ALRS ON: reset alarm *)
+		(* first assert ALRS *)
+		oActuator.wCommand := 16#0100;
+		DRG1_WRITE();
+		IF oActuator.xDataReady THEN
+			(* next step is to clear ALRS flag *)
+			oActuator.wState := 32;
+		END_IF
+
+	32: (* ALRS OFF: clear flag *)
+		(* clear ALRS flag *)
+		oActuator.wCommand := 16#0000;
+		DRG1_WRITE();
+		IF oActuator.xDataReady THEN
+			(* finish initialization *)
+			oActuator.wState := 30;
+		END_IF
+
+	33: (* SON: turn on servo *)
+		oActuator.wCommand := 16#1000;
+		DRG1_WRITE();
+		IF oActuator.xDataReady THEN
+			(* finish initialization *)
+			oActuator.wState := 30;
+		END_IF
+
+	35: (* HOME OFF: reset HOME flag *)
+		(* leave SON ON *)
+		oActuator.wCommand := 16#1000;
+		DRG1_WRITE();
+		IF oActuator.xDataReady THEN
+			(* now set the flag *)
+			oActuator.wState := 36;
+		END_IF
+
+	36: (* HOME ON: set HOME flag *)
+		(* SON | HOME *)
+		oActuator.wCommand := 16#1010;
+		DRG1_WRITE();
+		IF oActuator.xDataReady THEN
+			(* wait for HEND *)
+			oActuator.wState := 37;
+		END_IF
+
+	37: (* HEND: wait for home to finish *)
+		STATUS_READ();
+		IF oActuator.xDataReady THEN
+			(* test for HEND *)
+			IF NOT oActuator.awStatus[5].4 THEN
+				(* not home yet *)
+				oActuator.wState := 37;
+			ELSE
+				(* ready to receive position commands *)
+				oActuator.wState := 40;
+			END_IF
+		END_IF
+
+	40: (* IDLING: wait for new destination *)
+		STATUS_READ();
+		IF oActuator.xDataReady THEN
+			(* New target?  *)
+			IF wActuatorTarget <> wActuatorPosition THEN
+				(* update target *)
+				PCMD_WRITE();
+				xActuatorReady := FALSE;
+				oActuator.wState := 50;
+			ELSE
+				(* continue idling *)
+				STATUS_READ();
+				xActuatorReady := TRUE;
+				oActuator.wState := 40;
+			END_IF
+		END_IF
+
+	50: (* STARTING: set new target position*)
+		PCMD_WRITE();
+		IF oActuator.xDataReady THEN
+			(* started, now test for motion complete *)
+			STATUS_READ();
+			oActuator.wState := 60;
+		END_IF
+
+	60: (* MOVING: wait until move is completed*)
+		STATUS_READ();
+		IF oActuator.xDataReady THEN
+			(* wStatus & PEND ? *)
+			IF oActuator.awStatus[5].3 THEN
+				(* Move complete, goto IDLING *)
+				uiSuccessful := uiSuccessful + 1;
+				STATUS_READ();
+				oActuator.wState := 40;
+			ELSE
+				(* Still moving, test again *)
+				STATUS_READ();
+				oActuator.wState := 60;
+			END_IF
+		END_IF
+
+	ELSE (* Should never get here *)
+		oActuator.xConnect := FALSE;
+		oActuator.wState := 10;
+END_CASE
+
+END_PROGRAM
+ACTION	CONNECT:
+(* CONNECT *)
+(* initiate TCP connection *)
+
+(* Delay before initiating connection *)
+(*BEGDEBUG oActuator.tonConnect(IN := oActuator.xConnect, PT := DWORD_TO_TIME((BYTE_TO_DWORD(bID) * 100))); ENDDEBUG*)
+oActuator.tonConnect(IN := oActuator.xConnect, PT := t#100ms);
+
+(* Connect *)
+oActuator.xSend := FALSE;
+oActuator.oMBMaster(
+	xCONNECT			:= oActuator.tonConnect.Q,
+	strIP_ADDRESS 		:= strAddress,
+	wPORT 				:= wPort,
+	bUNIT_ID			:= bID,
+       bFUNCTION_CODE	:= 16#03,		(*ReadHoldingCoils*)
+       wREAD_ADDRESS	:= 16#9000,
+       wREAD_QUANTITY	:= 10,
+       ptREAD_DATA		:= ADR(oActuator.awStatus[0]),
+  	wWRITE_ADDRESS		:= 0,
+	wWRITE_QUANTITY		:= 0,
+	ptSEND_DATA			:= 0,
+	tTIME_OUT			:= tTCP_Timeout,
+	tCON_WATCHDOG		:= tTCP_Watchdog,
+	xSEND				:= oActuator.xSend
+	);
+
+(* Test for connection error *)
+IF oActuator.oMBMaster.wError <> 0 THEN
+	(* error, return to RESET *)
+	uiFailing := uiFailing + 1;
+	oActuator.xConnect  := FALSE;
+	oActuator.wState := 10;
+END_IF
+END_ACTION
+
+ACTION	DRG1_WRITE:
+(* DRG1_WRITE*)
+(* Write to DRG1 command register *)
+
+(* check for start condition *)
+IF NOT oActuator.xBusy THEN
+	oActuator.xBusy := TRUE;
+	oActuator.xSend := TRUE;
+END_IF
+
+(* set DRG1 command register *)
+oActuator.oMBMaster(
+	xCONNECT			:= oActuator.tonConnect.Q,
+	strIP_ADDRESS 		:= strAddress,
+	wPORT 				:= wPort,
+	bUNIT_ID			:= bID,
+       bFUNCTION_CODE	:= 16#06, 		(*WriteSingleRegister*)
+       wREAD_ADDRESS	:= 0,
+       wREAD_QUANTITY	:= 0,
+       ptREAD_DATA		:= 0,
+  	wWRITE_ADDRESS		:= 16#0D00,
+	wWRITE_QUANTITY		:= 1,
+	ptSEND_DATA			:= ADR(oActuator.wCommand),
+	tTIME_OUT			:= tTCP_Timeout,
+	tCON_WATCHDOG		:= tTCP_Watchdog,
+	xSEND				:= oActuator.xSend
+	);
+
+(* Test for transaction complete *)
+IF oActuator.oMBMaster.wError <> 0 THEN
+	(* error, return to INIT *)
+	uiFailing := uiFailing + 1;
+	oActuator.xConnect := FALSE;
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := FALSE;
+	oActuator.wState := 10;
+ELSIF NOT oActuator.xSend THEN
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := TRUE;
+ELSE
+	oActuator.xDataReady := FALSE;
+END_IF
+END_ACTION
+
+ACTION	PCMD_WRITE:
+(* PCMD_WRITE *)
+(* Write to PCMD target position register *)
+
+(* check for start condition *)
+IF NOT oActuator.xBusy THEN
+	oActuator.wTarget := wActuatorTarget;
+	oActuator.xBusy := TRUE;
+	oActuator.xSend := TRUE;
+END_IF
+
+(* set PCMD target position *)
+oActuator.oMBMaster(
+	xCONNECT			:= oActuator.tonConnect.Q,
+	strIP_ADDRESS 		:= strAddress,
+	wPORT 				:= wPort,
+	bUNIT_ID			:= bID,
+       bFUNCTION_CODE	:= 16#06, 		(*WriteSingleRegister*)
+       wREAD_ADDRESS	:= 0,
+       wREAD_QUANTITY	:= 0,
+       ptREAD_DATA		:= 0,
+  	wWRITE_ADDRESS		:= 16#9901,
+	wWRITE_QUANTITY		:= 1,
+	ptSEND_DATA			:= ADR(oActuator.wTarget),
+	tTIME_OUT			:= tTCP_Timeout,
+	tCON_WATCHDOG		:= tTCP_Watchdog,
+	xSEND				:= oActuator.xSend
+	);
+
+(* Test for transaction complete *)
+IF oActuator.oMBMaster.wError <> 0 THEN
+	(* error, return to RESET *)
+	uiFailing := uiFailing + 1;
+	oActuator.xConnect  := FALSE;
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := FALSE;
+	oActuator.wState := 10;
+ELSIF NOT oActuator.xSend THEN
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := TRUE;
+ELSE
+	oActuator.xDataReady := FALSE;
+END_IF
+END_ACTION
+
+ACTION	STATUS_READ:
+(* STATUS_READ *)
+(* read status registers PNOW thru STAT *)
+
+(* check for start condition *)
+IF NOT oActuator.xBusy THEN
+	oActuator.xBusy := TRUE;
+	oActuator.xSend := TRUE;
+END_IF
+
+(* Get actuator status words *)
+oActuator.oMBMaster(
+	xCONNECT			:= oActuator.tonConnect.Q,
+	strIP_ADDRESS 		:= strAddress,
+	wPORT 				:= wPort,
+	bUNIT_ID			:= bID,
+       bFUNCTION_CODE	:= 16#03,		(*ReadHoldingCoils*)
+       wREAD_ADDRESS	:= 16#9000,
+       wREAD_QUANTITY	:= 10,
+       ptREAD_DATA		:= ADR(oActuator.awStatus[0]),
+  	wWRITE_ADDRESS		:= 0,
+	wWRITE_QUANTITY		:= 0,
+	ptSEND_DATA			:= 0,
+	tTIME_OUT			:= tTCP_Timeout,
+	tCON_WATCHDOG		:= tTCP_Watchdog,
+	xSEND				:= oActuator.xSend
+	);
+
+(* Test for transaction complete *)
+IF oActuator.oMBMaster.wError <> 0 THEN
+	(* error, return to RESET *)
+	uiFailing := uiFailing + 1;
+	oActuator.xConnect  := FALSE;
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := FALSE;
+	oActuator.wState := 10;
+ELSIF NOT oActuator.xSend THEN
+	wActuatorPosition := oActuator.awStatus[1];
+	wActuatorAlarm := oActuator.awStatus[2];
+	wActuatorStatus := oActuator.awStatus[5];
+	oActuator.xBusy := FALSE;
+	oActuator.xDataReady := TRUE;
+ELSE
+	oActuator.xDataReady := FALSE;
+END_IF
+END_ACTION
+

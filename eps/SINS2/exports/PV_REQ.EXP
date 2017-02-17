@@ -1,0 +1,12 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+TYPE PV_REQ :
+	(
+	PV_NONE_REQ := 0,
+	PV_ISOLATE_REQ,
+	PV_PUMP_REQ,
+	PV_VENT_REQ
+	);
+END_TYPE
+(* @END_DECLARATION := '0' *)

@@ -1,0 +1,27 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+(* ROUGH PUMP CONTROL *)
+FUNCTION_BLOCK RP_FB
+VAR_INPUT
+	on_ena: BOOL;
+	off_ena: BOOL;
+
+	on_req : BOOL;
+	off_req : BOOL;
+END_VAR
+VAR_OUTPUT
+	on_cmd: BOOL;
+	not_symbol: BOOL;
+END_VAR
+VAR
+END_VAR
+(* @END_DECLARATION := '0' *)
+on_cmd := 	(NOT off_req OR NOT off_ena) AND
+			((on_ena AND on_req) OR on_cmd);
+
+not_symbol := (on_cmd AND NOT off_ena) OR (NOT on_cmd AND NOT on_ena);
+
+END_FUNCTION_BLOCK

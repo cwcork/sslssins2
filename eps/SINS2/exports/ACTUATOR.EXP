@@ -1,0 +1,21 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+TYPE Actuator :
+STRUCT
+	awStatus	: ARRAY [0..9] OF WORD;	(* actuator status words, incomming*)
+	wCommand	: WORD; 				(* actuator control command, outgoing *)
+	wTarget		: WORD;					(* actuator target position, outgoing *)
+
+	oMBMaster	: ETHERNET_MODBUSMASTER_TCP;
+	tonConnect	: TON;					(* connection delay timer *)
+
+	xConnect	: BOOL;					(* initiate TCP connection *)
+	xSend		: BOOL;					(* Initiate MB transaction *)
+	xBusy		: BOOL;					(* Transaction in progress *)
+	xDataReady	: BOOL;					(* Transaction data ready *)
+
+	wState		: WORD := 10;			(* sequencer state *)
+END_STRUCT
+END_TYPE
+(* @END_DECLARATION := '0' *)

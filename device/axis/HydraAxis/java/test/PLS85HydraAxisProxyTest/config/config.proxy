@@ -1,0 +1,55 @@
+# config.proxy-direct_cwcork
+#
+# The client reads this property to create the reference to the
+# "PLS85HydraAxis" object in the server on host cwcork.
+#
+#Axis.Proxy=PLS85HydraAxis:tcp -h 192.168.100.201 -p 10000
+
+#
+# The IceGrid locator proxy.
+#
+Ice.Default.Locator=TestGrid/Locator:default -p 4061
+
+#
+# Increase the ThreadPool size
+#
+Ice.ThreadPool.Client.Size=2
+
+#
+# Warn about connection exceptions.
+#
+Ice.Warn.Connections=1
+
+#
+# Network Tracing
+#
+# 0 = no network tracing
+# 1 = trace connection establishment and closure
+# 2 = like 1, but more detailed
+# 3 = like 2, but also trace data transfer
+#
+#Ice.Trace.Network=1
+
+#
+# Protocol Tracing
+#
+# 0 = no protocol tracing
+# 1 = trace protocol messages
+#
+#Ice.Trace.Protocol=1
+
+#
+# Security Tracing
+#
+# 0 = no security tracing
+# 1 = trace messages
+#
+#IceSSL.Trace.Security=1
+
+#
+# SSL Configuration
+#
+#Ice.Plugin.IceSSL=IceSSL.PluginFactory
+#IceSSL.DefaultDir=../../../../certs
+#IceSSL.Keystore=client.jks
+#IceSSL.Password=password

@@ -1,0 +1,12 @@
+LIBRARY
+WagoLibModbus_IP_01.lib 7.9.10 05:37:52
+(* @LIBRARYSYMFILEINFO := '0' *)
+NumOfPOUs: 5
+Client_OpenClose: 2048
+ETHERNET_MODBUSMASTER_TCP: 0
+ETHERNET_MODBUSMASTER_UDP: 2048
+Modbus_IP_Version: 2048
+ModbusRequest: 2048
+NumOfGVLs: 1
+Globale_Variablen: 0
+END_LIBRARY

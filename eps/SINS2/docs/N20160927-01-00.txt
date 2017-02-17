@@ -1,0 +1,222 @@
+NOTE : N20160927-01
+SUBJ : SCXML for Pump/Vent
+AUTH : Carl Cork
+
+REV DATE        DESCRIPTION
+--- ----------  ------------------------------------------------------------
+ 00 2016-09-27  Initial
+
+Starting with SCXML spec: https://www.w3.org/TR/scxml/.
+
+This is a pseudo-SCXML specification. In particular, it
+assumes that the <datamodel> is derived from the Declarations
+section of IEC-61131 specifications, and expressions conform
+to Structured Text IEC-61131 statements.
+
+Events are instances of rising edge triggers (R_TRIG)
+
+<scxml name="pump-vent" initial="ISOLATE"
+  <datastore>
+    RESET_REQUIRED : BOOL;
+    
+    PUMP_REQ  : BOOL;
+    VENT_REQ  : BOOL;
+    
+    LLV_OPEN_REQ_TRIG  : R_TRIG;
+    LLV_CLOSE_REQ_TRIG : R_TRIG;
+    ESV_OPEN_REQ_TRIG  : R_TRIG;
+    ESV_CLOSE_REQ_TRIG : R_TRIG;
+    VPV_OPEN_REQ_TRIG  : R_TRIG;
+    VPV_CLOSE_REQ_TRIG : R_TRIG;
+    RPV_OPEN_REQ_TRIG  : R_TRIG;
+    RPV_CLOSE_REQ_TRIG : R_TRIG;
+    TPV_OPEN_REQ_TRIG  : R_TRIG;
+    TPV_CLOSE_REQ_TRIG : R_TRIG;
+    
+    RP_READY  : BOOL;
+    TP_READY  : BOOL;
+
+    PT_PSL_HI    : BOOL;
+    PT_PSL_MIDHI : BOOL;
+    PT_PSL_MIDLO : BOOL;
+    PT_PSL_LO    : BOOL;
+    
+    LLV_OPEN   : BOOL;
+    LLV_CLOSED : BOOL;
+    ESV_OPEN   : BOOL;
+    ESV_CLOSED : BOOL;
+    VPV_OPEN   : BOOL;
+    VPV_CLOSED : BOOL;
+    RPV_OPEN   : BOOL;
+    RPV_CLOSED : BOOL;
+    TPV_OPEN   : BOOL;
+    TPV_CLOSED : BOOL;
+    
+    LLV_OPEN_REQ : BOOL;
+    ESV_OPEN_REQ : BOOL;
+    VPV_OPEN_REQ : BOOL;
+    RPV_OPEN_REQ : BOOL;
+    TPV_OPEN_REQ : BOOL;
+  </datastore>
+  
+  <transition cond="RESET_REQUIRED" target="ERROR">
+      <log expr="RESET_REQUIRED">
+    </transition>
+
+  <state id="ERROR">
+    <onentry>
+      LLV_OPEN_REQ := FALSE;
+      ESV_OPEN_REQ := FALSE;
+      VPV_OPEN_REQ := FALSE;
+      RPV_OPEN_REQ := FALSE;
+      TPV_OPEN_REQ := FALSE;
+    </onentry>
+    
+    <transition cond="NOT RESET_REQUIRED" target="ISOLATE"/>
+  </state>
+  
+  <state id="ISOLATE" initial="ISOLATING">
+    <onentry>
+      LLV_OPEN_REQ := FALSE;
+      ESV_OPEN_REQ := FALSE;
+      VPV_OPEN_REQ := FALSE;
+      RPV_OPEN_REQ := FALSE;
+      TPV_OPEN_REQ := FALSE;
+    </onentry>
+    
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    
+    <state id="ISOLATING">
+      <transition cond="(LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND RPV_CLOSED AND TPV_CLOSED)" target="ISOLATED"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <state id="ISOLATED">
+      <transition cond="NOT (LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND RPV_CLOSED AND TPV_CLOSED)" target="ISOLATING"/>
+      <transition cond="PUMP_REQ AND NOT PT_PSL_MIDLO AND RP_READY" target="RP_PUMP"/>
+      <transition cond="RPV_OPEN_REQ_TRIG AND RP_READY" target="RP_PUMP"/>
+      <transition cond="PUMP_REQ AND PT_PSL_MIDLO AND TP_READY" target="TP_PUMP"/>
+      <transition cond="TPV_OPEN_REQ_TRIG AND PT_PSL_MIDLO AND TP_READY" target="TP_PUMP"/>
+      <transition cond="VENT_REQ OR VPV_CLOSE_REQ_TRIG" target="VENT"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+  </state>
+
+  <state id="RP_PUMP" initial="RP_PUMPING">
+    <onentry>
+      LLV_OPEN_REQ := FALSE;
+      ESV_OPEN_REQ := FALSE;
+      VPV_OPEN_REQ := FALSE;
+      RPV_OPEN_REQ := TRUE;
+      TPV_OPEN_REQ := FALSE;
+    </onentry>
+    
+    <transition cond="NOT(LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND TPV_CLOSED)" target="ERROR">
+      <log expr="'ERROR in RP_PUMP: NOT(LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND TPV_CLOSED)'">
+    </transition>
+    <transition cond="NOT RP_READY" target="ISOLATE"/>
+    <transition cond="VENT_REQ OR RPV_CLOSE_REQ_TRIG" target="ISOLATE"/>
+    <transition cond="" target=""/>
+    
+    <state id="RP_PUMPING">
+      <transition cond="PT_PSL_MIDLO" target="RP_PUMPED"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <state id="RP_PUMPED">
+      <transition cond="NOT PT_PSL_MIDLO" target="RP_PUMPING"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+  </state>
+
+  <state id="TP_PUMP" initial="TP_PUMPING">
+    <onentry>
+      LLV_OPEN_REQ := FALSE;
+      ESV_OPEN_REQ := FALSE;
+      VPV_OPEN_REQ := FALSE;
+      RPV_OPEN_REQ := FALSE;
+      TPV_OPEN_REQ := TRUE;
+    </onentry>
+    
+    <transition cond="NOT(LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND RPV_CLOSED)" target="ERROR">
+      <log expr="'ERROR in TP_PUMP: NOT(LLV_CLOSED AND ESV_CLOSED AND VPV_CLOSED AND RPV_CLOSED)'">
+    </transition>
+    <transition cond="NOT TP_READY" target="ISOLATE"/>
+    <transition cond="VENT_REQ OR TPV_CLOSE_REQ_TRIG" target="ISOLATE"/>
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    
+    <state id="TP_PUMPING">
+      <transition cond="PT_PSL_LO" target="TP_PUMPED"/>
+      <transition cond="NOT PT_PSL_MIDLO" target="ISOLATE"/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <state id="TP_PUMPED">
+      <transition cond="NOT PT_PSL_LO" target="TP_PUMPING"/>
+      <transition cond="" target=""/>
+    </state>
+  </state>
+
+  <state id="VENT" initial="VENTING">
+    <onentry>
+      LLV_OPEN_REQ := FALSE;
+      ESV_OPEN_REQ := FALSE;
+      VPV_OPEN_REQ := TRUE;
+      RPV_OPEN_REQ := FALSE;
+      TPV_OPEN_REQ := FALSE;
+    </onentry>
+    
+    <transition cond="NOT(LLV_CLOSED AND ESV_CLOSED AND RPV_CLOSED AND TPV_CLOSED)" target="ERROR">
+      <log expr="'ERROR in VENT: NOT(LLV_CLOSED AND ESV_CLOSED AND RPV_CLOSED AND TPV_CLOSED)'">
+    </transition>
+    <transition cond="PUMP_REQ OR VPV_CLOSE_REQ_TRIG" target="ISOLATE"/>
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    
+    <state id="VENTING">
+      <transition cond="PT_PSL_HI" target="VENTED"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <state id="VENTED">
+      <transition cond="NOT PT_PSL_HI" target="VENTING"/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+  </state>
+
+  <state id="" initial="">
+    <onentry>
+    </onentry>
+    
+    <onexit>
+    </onexit>
+    
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    <transition cond="" target=""/>
+    
+    <state id="">
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <state id="">
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+      <transition cond="" target=""/>
+    </state>
+    
+    <final id=""/>
+  </state>
+
+</scxml>

@@ -1,0 +1,22 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @GLOBAL_VARIABLE_LIST := 'Global_Variables' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+VAR_GLOBAL
+	xActuatorReady		: BOOL;	(* In Position *)
+	wActuatorStatus		: WORD;	(* Current Status *)
+	wActuatorPosition	: WORD;	(* Current Position *)
+	wActuatorAlarm		: WORD;	(* Current Alarm *)
+END_VAR
+VAR_GLOBAL RETAIN
+	wActuatorTarget		: WORD;	(* Target Position *)
+END_VAR
+
+(* @OBJECT_END := 'Global_Variables' *)
+(* @CONNECTIONS := Global_Variables
+FILENAME : ''
+FILETIME : 0
+EXPORT : 0
+NUMOFCONNECTIONS : 0
+*)

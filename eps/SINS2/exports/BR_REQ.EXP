@@ -1,0 +1,13 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+TYPE BR_REQ :
+	(
+	BR_NONE_REQ := 0,
+	BR_SINS1_REQ,
+	BR_SINS2_REQ,
+	BR_SINS3_REQ,
+	BR_YAG_REQ
+	);
+END_TYPE
+(* @END_DECLARATION := '0' *)
