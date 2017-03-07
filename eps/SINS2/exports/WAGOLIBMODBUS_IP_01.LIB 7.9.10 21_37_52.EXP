@@ -1,5 +1,5 @@
 LIBRARY
-WagoLibModbus_IP_01.lib 7.9.10 05:37:52
+WagoLibModbus_IP_01.lib 7.9.10 21:37:52
 (* @LIBRARYSYMFILEINFO := '0' *)
 NumOfPOUs: 5
 Client_OpenClose: 2048
